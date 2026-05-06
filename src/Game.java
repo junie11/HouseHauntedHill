@@ -4,6 +4,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.Timer;
 
 import java.awt.Color;
 import java.awt.Container;
@@ -11,6 +12,9 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 public class Game {
 
@@ -26,6 +30,8 @@ public class Game {
     String weapon = "none";
     String bullets = "none";
 
+    Timer typingTimer;
+
     ChoiceHandler choiceHandler = new ChoiceHandler();
 
     public static void main(String[] args) throws Exception {
@@ -38,14 +44,14 @@ public class Game {
 
     public void createTitleScreen() {
         window = new JFrame();
-        window.setSize(800, 600);
+        window.setSize(1100, 750);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.getContentPane().setBackground(Color.black);
         window.setLayout(null);
         con = window.getContentPane();
 
         titleNamePanel = new JPanel();
-        titleNamePanel.setBounds(100, 225, 600, 150);
+        titleNamePanel.setBounds(100, 270, 900, 150);
         titleNamePanel.setBackground(Color.black);
         titleNameLabel = new JLabel("HOUSE ON A HAUNTED HILL");
         titleNameLabel.setForeground(Color.white);
@@ -54,7 +60,7 @@ public class Game {
         con.add(titleNamePanel);
 
         startButtonPanel = new JPanel();
-        startButtonPanel.setBounds(300, 375, 250, 150);
+        startButtonPanel.setBounds(425, 430, 250, 150);
         startButtonPanel.setBackground(Color.black);
         startButtonPanel.setLayout(null);
         con.add(startButtonPanel);
@@ -62,7 +68,7 @@ public class Game {
         startButton = new JButton("ENTER");
         startButton.setBounds(25, 50, 150, 50);
         styleButton(startButton);
-        startButton.addActionListener(e -> createGameScreen());
+        startButton.addActionListener(e -> { playSound("door.wav"); createGameScreen(); });
         startButtonPanel.add(startButton);
 
         window.setVisible(true);
@@ -73,13 +79,13 @@ public class Game {
         startButtonPanel.setVisible(false);
 
         mainTextPanel = new JPanel();
-        mainTextPanel.setBounds(50, 30, 700, 310);
+        mainTextPanel.setBounds(50, 30, 1000, 400);
         mainTextPanel.setBackground(Color.black);
         mainTextPanel.setLayout(null);
         con.add(mainTextPanel);
 
         mainTextArea = new JTextArea();
-        mainTextArea.setBounds(0, 0, 700, 310);
+        mainTextArea.setBounds(0, 0, 1000, 400);
         mainTextArea.setBackground(Color.black);
         mainTextArea.setForeground(Color.white);
         mainTextArea.setFont(normalFont);
@@ -87,7 +93,7 @@ public class Game {
         mainTextPanel.add(mainTextArea);
 
         choiceButtonPanel = new JPanel();
-        choiceButtonPanel.setBounds(50, 360, 700, 180);
+        choiceButtonPanel.setBounds(50, 450, 1000, 210);
         choiceButtonPanel.setBackground(Color.black);
         choiceButtonPanel.setLayout(new GridLayout(2, 1, 0, 5));
         con.add(choiceButtonPanel);
@@ -107,6 +113,36 @@ public class Game {
         entryWay();
     }
 
+    private void playSound(String filename) {
+        try {
+            Clip clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(new File(filename)));
+            clip.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void typeText(String text) {
+        if (typingTimer != null && typingTimer.isRunning()) {
+            typingTimer.stop();
+        }
+        mainTextArea.setText("");
+        choice1.setEnabled(false);
+        choice2.setEnabled(false);
+        final int[] index = {0};
+        typingTimer = new Timer(30, e -> {
+            if (index[0] < text.length()) {
+                mainTextArea.append(String.valueOf(text.charAt(index[0]++)));
+            } else {
+                typingTimer.stop();
+                choice1.setEnabled(true);
+                choice2.setEnabled(true);
+            }
+        });
+        typingTimer.start();
+    }
+
     // Styles a button with the game's standard black/white theme
     private void styleButton(JButton button) {
         button.setBackground(Color.black);
@@ -124,7 +160,7 @@ public class Game {
     // Displays a standard scene with two labeled choices
     private void showScene(String pos, String text, String c1Text, String c2Text) {
         position = pos;
-        mainTextArea.setText(text);
+        typeText(text);
         configureButton(choice1, c1Text, "c1", choiceHandler);
         configureButton(choice2, c2Text, "c2", choiceHandler);
     }
@@ -188,7 +224,7 @@ public class Game {
 
     public void leaveHouse() {
         position = "leaveHouse";
-        mainTextArea.setText("You try to leave. \n\nBut the door slams shut in front of you. \nAnd then you realize.\n\nSomething is standing behind you.");
+        typeText("You try to leave. \n\nBut the door slams shut in front of you. \nAnd then you realize.\n\nSomething is standing behind you.");
         String c1Text = weapon.equals("gun") ? "Turn around and shoot" : "Turn around and face it";
         configureButton(choice1, c1Text, "c1", choiceHandler);
         configureButton(choice2, "Try the door", "c2", choiceHandler);
@@ -221,7 +257,7 @@ public class Game {
 
     public void runAway() {
         position = "runAway";
-        mainTextArea.setText("You start your escape and something\n immediately starts running after you.");
+        typeText("You start your escape and something\n immediately starts running after you.");
         configureButton(choice1, "Run out the front door", "c1", choiceHandler);
         String c2Text = weapon.equals("gun") ? "Use the gun" : "Try to fight it";
         configureButton(choice2, c2Text, "c2", choiceHandler);
@@ -229,7 +265,7 @@ public class Game {
 
     public void investigateSound() {
         position = "investigateSound";
-        mainTextArea.setText("You quietly walk towards the source of \nthe noise and see a man lying on the floor\ncovered in blood. \nHe raises his head and you recognize him \nas a priest.\n\n'Please kill me.' He begs you.");
+        typeText("You quietly walk towards the source of \nthe noise and see a man lying on the floor\ncovered in blood. \nHe raises his head and you recognize him \nas a priest.\n\n'Please kill me.' He begs you.");
         configureButton(choice1, "Talk to him", "c1", choiceHandler);
         String c2Text = weapon.equals("gun") ? "Shoot him" : "Leave him to his fate";
         configureButton(choice2, c2Text, "c2", choiceHandler);
@@ -238,10 +274,10 @@ public class Game {
     public void talkToPriest() {
         position = "talkToPriest";
         if (weapon.equals("gun")) {
-            mainTextArea.setText("The priest explains that he was trying to\nexorcise the demon haunting the house.\nAnd had no choice but to seal the demon \ninside himself.\n\nHe hands you a box of silver bullets.\n'Here, use these.'");
+            typeText("The priest explains that he was trying to\nexorcise the demon haunting the house.\nAnd had no choice but to seal the demon \ninside himself.\n\nHe hands you a box of silver bullets.\n'Here, use these.'");
             configureButton(choice1, "Take the silver bullets", "c1", choiceHandler);
         } else {
-            mainTextArea.setText("The priest explains that he was trying to\nexorcise the demon haunting the house.\nAnd had no choice but to seal the demon \ninside himself.\n\nHe hands you a vial of holy water.\n'Here, use this.'");
+            typeText("The priest explains that he was trying to\nexorcise the demon haunting the house.\nAnd had no choice but to seal the demon \ninside himself.\n\nHe hands you a vial of holy water.\n'Here, use this.'");
             configureButton(choice1, "Take the holy water", "c1", choiceHandler);
         }
         configureButton(choice2, "Run away", "c2", choiceHandler);
