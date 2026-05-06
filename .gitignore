@@ -1,0 +1,9 @@
+# Compiled output
+bin/
+*.class
+
+# Build artifact
+*.jar
+
+# Mac system files
+.DS_Store
